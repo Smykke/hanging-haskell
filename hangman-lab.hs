@@ -4,9 +4,8 @@ lerChave :: IO String
 lerChave = do
 	putStrLn "Lendo chave.txt"
 	chave <- readFile "chave.txt"
-	--chave <- take (length(chave)-1) chave
 	putStr "Saida: "
-	--putStr chave
+	putStr chave
 	return chave
 
 --imprimirPalavra ::
@@ -14,11 +13,25 @@ lerChave = do
 	-- putStr x
 	-- putStr " "
 	-- imprimirPalavra xs
+codificar :: String -> IO()
+codificar palavra = do
+	let tam = length palavra
+	let codificada = [ if i `mod` 2 == 0 then ' ' else '_' | i <- [1..2*tam]]
+	putStrLn codificada
+
+	-- if palavra > 1 then lista <- "_" ++ tamanho palavra-1
+	-- else "_"
+
+tamanho :: String -> Int
+tamanho palavra = length palavra
+
 
 main :: IO()
 main = do
-	original <- lerChave
-	putStr original
-	tentativa <- [if i <= length(original) then '-' else ' '| i <- [1..length(original-1)]]
-	putStr tentativa
-	--putStrLn "ok!"
+	input <- openFile "chave.txt" ReadMode
+	chave <- hGetContents input
+	codificar chave
+	-- putStrLn chave
+	-- let tam = tamanho chave
+	-- print tam
+	hClose input
