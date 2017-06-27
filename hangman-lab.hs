@@ -1,11 +1,13 @@
 import System.IO
 
-lerChave :: IO String
+lerChave :: IO ([(Char, Char)])
 lerChave = do
 	putStrLn "Lendo chave.txt"
-	chave <- readFile "chave.txt"
-	putStr "Saida: "
-	putStr chave
+	original <- readFile "chave.txt"
+	print "Saida: "
+	print original
+	let chave = codificar2 original
+	print chave
 	return chave
 
 --imprimirPalavra ::
@@ -13,25 +15,45 @@ lerChave = do
 	-- putStr x
 	-- putStr " "
 	-- imprimirPalavra xs
-codificar :: String -> IO()
-codificar palavra = do
-	let tam = length palavra
-	let codificada = [ if i `mod` 2 == 0 then ' ' else '_' | i <- [1..2*tam]]
-	putStrLn codificada
+codificar :: String -> String
+-- codificar palavra = [ if i `mod` 2 == 0 then ' ' else '_' | i <- [1..2*(length palavra)]]
 
-	-- if palavra > 1 then lista <- "_" ++ tamanho palavra-1
-	-- else "_"
+codificar2 :: String -> [(Char, Char)]
+codificar2 palavra = [ (x, '_') | x <- take ((length palavra) -1) palavra]
+
+imprimir :: [(Char, Char)] -> String
+imprimir palavra = [y | (x, y) <- palavra]
 
 tamanho :: String -> Int
 tamanho palavra = length palavra
 
+igual :: (Char, Char) -> Bool
+igual (a, b)
+  | a == b = True
+  | otherwise = False
 
-main :: IO()
+compara :: [(Char, Char)] -> Bool
+compara [] = True
+compara xs
+  | igual (head xs) = compara (tail xs)
+  | otherwise = False
+
+adivinhar :: [(Char, Char)] -> IO ()
+adivinhar chave = do
+	putStr "\n"
+	putStrLn (imprimir chave)
+	putStrLn "Letra: "
+	letra <- getChar
+	let tentativa = [ if x == letra then (x, x) else (x, y) | (x, y) <- chave]
+	--putStr tentativa
+	if compara tentativa then putStrLn "\nAcertou!" else adivinhar tentativa
+
+main :: IO ()
 main = do
-	input <- openFile "chave.txt" ReadMode
-	chave <- hGetContents input
-	codificar chave
+	-- input <- openFile "chave.txt" ReadMode
+	-- chave <- hGetContents input
+	chave <- lerChave
 	-- putStrLn chave
-	-- let tam = tamanho chave
-	-- print tam
-	hClose input
+	adivinhar chave
+	putStrLn "cabou!"
+	-- hClose input
