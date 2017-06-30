@@ -1,59 +1,52 @@
 import System.IO
 
-lerChave :: IO ([(Char, Char)])
+lerChave :: IO String
 lerChave = do
 	putStrLn "Lendo chave.txt"
 	original <- readFile "chave.txt"
-	print "Saida: "
-	print original
-	let chave = codificar2 original
-	print chave
-	return chave
+	return (take ((length original) -1) original) -- Tira o '\n'
 
---imprimirPalavra ::
--- imprimirPalavra x:xs = do
-	-- putStr x
-	-- putStr " "
-	-- imprimirPalavra xs
 codificar :: String -> String
--- codificar palavra = [ if i `mod` 2 == 0 then ' ' else '_' | i <- [1..2*(length palavra)]]
+codificar palavra = [ '_' | p <- palavra]
 
-codificar2 :: String -> [(Char, Char)]
-codificar2 palavra = [ (x, '_') | x <- take ((length palavra) -1) palavra]
-
-imprimir :: [(Char, Char)] -> String
-imprimir palavra = [y | (x, y) <- palavra]
+imprimir :: String -> IO ()
+imprimir [] = putChar '\n'
+imprimir (x:xs) = do
+	putChar x
+	putChar ' '
+	imprimir xs
 
 tamanho :: String -> Int
 tamanho palavra = length palavra
 
-igual :: (Char, Char) -> Bool
-igual (a, b)
-  | a == b = True
-  | otherwise = False
+adivinhar :: String -> String -> Int -> IO ()
+adivinhar chave tentativa count = do
+	putStr "\nPrograma: "
+	imprimir tentativa
+	putStr "Jogador ("
+	if count < 8 then putStr $ show count else putStr "ultima chance): "
+	putStr "): "
+	palavra <- getLine
 
-compara :: [(Char, Char)] -> Bool
-compara [] = True
-compara xs
-  | igual (head xs) = compara (tail xs)
-  | otherwise = False
+	if (length palavra) == 1
+		then do
+			let letra = head palavra
+			let nova_tentativa =	[ if x == letra then x else y | (x, y) <- zip chave tentativa]
+			if chave == nova_tentativa
+				then putStrLn chave ++ "Resposta correta - Vitória!"
+				else if count < 8 then adivinhar chave nova_tentativa (count+1)
+					else putStrLn "Resposta incorreta - Derrota!"
+		else if (length palavra) == (length chave)
+			then do
+				if chave == palavra
+					then putStrLn "Resposta correta - Vitória!"
+					else putStrLn "Resposta incorreta - Derrota!"
+		else putStrLn "Resposta incorreta - Derrota!"
 
-adivinhar :: [(Char, Char)] -> IO ()
-adivinhar chave = do
-	putStr "\n"
-	putStrLn (imprimir chave)
-	putStrLn "Letra: "
-	letra <- getChar
-	let tentativa = [ if x == letra then (x, x) else (x, y) | (x, y) <- chave]
-	--putStr tentativa
-	if compara tentativa then putStrLn "\nAcertou!" else adivinhar tentativa
 
 main :: IO ()
 main = do
-	-- input <- openFile "chave.txt" ReadMode
-	-- chave <- hGetContents input
 	chave <- lerChave
-	-- putStrLn chave
-	adivinhar chave
-	putStrLn "cabou!"
-	-- hClose input
+--	putStrLn chave
+	adivinhar chave (codificar chave) 1
+	putStrLn "\nQue pessoa inteligente!"
