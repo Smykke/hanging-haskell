@@ -32,12 +32,17 @@ imprimir (x:xs) = do
 	putChar ' '
 	imprimir xs
 
----- RESULTADO FINAL: Imprime se o jogador acertou ou não
+---- RESULTADO FINAL: Imprime se o jogador acertou ou não e sai do programa
 acertou :: String -> IO()
-acertou chave = putStrLn ("Resposta correta - Vitória!\n" ++ chave)
+acertou chave = do
+	putStrLn ("Resposta correta - Vitória!\n\n" ++ chave
+		++ "\n\nElementar, meu caro Watson. Você já exercitou " ++ show(length(chave)) ++ " neurônios hoje.")
+	exitWith ExitSuccess
 
 errou :: IO()
-errou = putStrLn "Resposta incorreta - Derrota!"
+errou = do
+	putStrLn "Resposta incorreta - Derrota!"
+	exitWith ExitSuccess
 
 ---- ADIVINHAR: Corresponde ao loop principal do jogo. Lê a entrada do usuário,
 --compara com a chave e o conduz a uma nova tentativa ou mostra o resultado final.
@@ -48,34 +53,35 @@ adivinhar :: String -> String -> Int -> IO ()
 adivinhar chave tentativa count = do
 	putStr "\nPrograma: "
 	imprimir tentativa
-	putStr ("Jogador (" ++ (if count < 8 then show (count) else "ultima chance") ++ "): ")
---where
+	putStr ("Jogador (" ++ (if count < 8 then show $ count else "última chance") ++ "): ")
+	hFlush stdout -- Para imprimir "Jogador (count):" no GHC antes de digitar uma letra
 
 	palavra <- getLine
- -- verificar se está na púltima tentativa => só pode verificar a palavra inteira e não uma letra
-	if (length palavra) == 1 -- Usuário digitou uma letra
-		then do
-			let letra = toLower(head palavra)
-			let nova_tentativa = [ if x == letra then x else y | (x, y) <- zip chave tentativa]
-			unless (not(elem letra tentativa)) $ do
-				putStrLn "Hm, parece que você já digitou essa letra"
-				adivinhar chave tentativa count   -- tem que ser chamado tudo junto no fim ou colocar um exit ao sair (ExitSuccess)
-			if chave == nova_tentativa
-				then acertou chave
-				else if count < 8
-					then adivinhar chave nova_tentativa (count+1)
+
+	if count == 8 -- Última chance
+		then if chave == palavra
+			then acertou chave
+			else errou
+		else if (length palavra) == 1 -- Usuário digitou uma letra
+			then do
+				let letra = toLower(head palavra)
+				let nova_tentativa = [ if x == letra then x else y | (x, y) <- zip chave tentativa]
+				unless (notElem letra tentativa) $ do
+					putStrLn "Hm, parece que você já digitou essa letra"
+					adivinhar chave tentativa count
+				if chave == nova_tentativa
+					then acertou chave
+					else adivinhar chave nova_tentativa (count+1)
+			else if (length palavra) == (length chave) -- Usuário tentou adivinhar a palavra
+				then if chave == palavra
+					then acertou chave
 					else errou
-		else if (length palavra) == (length chave) -- Usuário tentou adivinhar a palavra
-			then if chave == palavra
-				then acertou chave
-				else errou
-			else if (length palavra) == 0 --
-				then adivinhar chave tentativa count
-				else errou -- Usuário não inseriu uma tentativa válida
+				else if (length palavra) == 0 -- Usuário digitou nada
+					then adivinhar chave tentativa count
+					else errou -- Usuário não inseriu uma tentativa válida
 
 main :: IO ()
 main = do
 	chave <- lerChave
 --	putStrLn chave
 	adivinhar chave (codificar chave) 1
-	putStrLn ("\nElementar, meu caro Watson. Você já exercitou " ++ show(length(chave)) ++ " neurônios hoje.")
